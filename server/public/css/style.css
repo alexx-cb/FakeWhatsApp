@@ -1,0 +1,14 @@
+.avatar {
+    width: 100px;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+.avatar.selected {
+    border: 2px solid blue;
+}
+.avatar-small {
+    width: 30px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 5px;
+}
