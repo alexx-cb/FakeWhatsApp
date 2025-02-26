@@ -90,7 +90,7 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         numUsuarios--;
         
-        // Si estaba en una sala, notificar que salió
+        // Si estaba en una sala, notificar que salio
         if (socket.sala) {
             socket.to(socket.sala).emit("usuarioSalio", { 
                 nombre: socket.nombre, 

@@ -5,79 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat con Salas</title>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="js/index.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        #landing {
-            text-align: center;
-        }
-        #avatars {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin: 20px 0;
-        }
-        .avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            cursor: pointer;
-            object-fit: cover;
-            border: 3px solid transparent;
-        }
-        .avatar.selected {
-            border-color: #007bff;
-        }
-        #username {
-            padding: 10px;
-            width: 100%;
-            max-width: 300px;
-            margin-bottom: 20px;
-        }
-        button {
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        #chat {
-            display: none;
-        }
-        #listaSala {
-            height: 400px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin: 10px 0;
-            list-style-type: none;
-        }
-        #input {
-            width: calc(100% - 80px);
-            padding: 10px;
-        }
-        #salasContainer {
-            display: flex;
-            gap: 10px;
-            margin: 10px 0;
-        }
-        .sala-btn {
-            padding: 8px 12px;
-        }
-        .sala-btn.active {
-            background-color: #28a745;
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <!-- Pantalla de inicio -->
@@ -87,34 +16,64 @@
         <h3>Elige una foto de perfil</h3>
         <div id="avatars">
             <img src="./img/alonso.jpg" class="avatar" data-avatar="alonso.jpg">
-            <img src="/img/avatar2.png" class="avatar" data-avatar="avatar2.png">
-            <img src="/img/avatar3.png" class="avatar" data-avatar="avatar3.png">
+            <img src="./img/alonso_avatar.jpg" class="avatar" data-avatar="alonso_avatar.jpg">
+            <img src="./img/alonso_feliz.webp" class="avatar" data-avatar="alonso_feliz.webp">
         </div>
         <button id="startChat">Entrar al Chat</button>
     </div>
-    
-    <!-- Interfaz del Chat -->
-    <div id="chat">
-        <h2 id="nombreSala">Sala: pública</h2>
-        
-        <!-- Botones de salas siempre visibles -->
-        <div id="salasContainer">
-            <button class="sala-btn active" data-sala="publica">Sala Pública</button>
-            <button class="sala-btn" data-sala="deportes">Deportes</button>
-            <button class="sala-btn" data-sala="musica">Música</button>
-            <button class="sala-btn" data-sala="gaming">Gaming</button>
+   
+    <!-- Interfaz del Chat estilo WhatsApp Web -->
+    <div id="chat" style="display: none;">
+        <div class="wa-container">
+            <!-- Sidebar izquierdo (lista de salas) -->
+            <div class="wa-sidebar">
+                <div class="wa-sidebar-header">
+                    <div class="wa-profile">
+                        <img id="user-avatar" class="wa-profile-img" src="" alt="Tu perfil">
+                        <span id="user-name"></span>
+                    </div>
+                    <div class="wa-actions">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </div>
+                </div>
+                
+
+                <div id="salasContainer">
+                    <button class="sala-btn active" data-sala="publica">Sala Pública</button>
+                    <button class="sala-btn" data-sala="sala-2">Sala 2</button>
+                    <button class="sala-btn" data-sala="sala-3">Sala 3</button>
+                    <button class="sala-btn" data-sala="sala-4">Sala 4</button>
+                </div>
+            </div>
+            
+            <!-- Área principal del chat -->
+            <div class="wa-chat">
+                <!-- Encabezado del chat -->
+                <div class="wa-chat-header">
+                    <h2 id="nombreSala">Sala: pública</h2>
+                </div>
+                
+                <!-- Lista de mensajes -->
+                <ul id="listaSala"></ul>
+                
+                <!-- Área de entrada de mensajes -->
+                <div class="wa-input-area">
+                    <div class="wa-attach-container">
+                        <label for="imagen" class="wa-attach-label">
+                            <i class="fas fa-paperclip"></i>
+                        </label>
+                        <input type="file" id="imagen">
+                    </div>
+                    <input type="text" id="input" placeholder="Escribe un mensaje">
+                    <button id="enviar">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                    <button id="enviarImagen">Enviar Imagen</button>
+                </div>
+            </div>
         </div>
-        
-        <!-- Lista de mensajes -->
-        <ul id="listaSala"></ul>
-        
-        <!-- Enviar mensajes -->
-        <input type="text" id="input" placeholder="Escribe un mensaje">
-        <button id="enviar">Enviar</button>
-        
-        <!-- Enviar imágenes -->
-        <input type="file" id="imagen">
-        <button id="enviarImagen">Enviar Imagen</button>
     </div>
+
+    <script src="js/index.js"></script>
 </body>
 </html>

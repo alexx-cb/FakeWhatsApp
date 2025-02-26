@@ -1,7 +1,6 @@
 window.onload = () => {
     const socket = io();
 
-    // Elementos del DOM
     const listaSala = document.getElementById("listaSala");
     const input = document.getElementById("input");
     const imagen = document.getElementById("imagen");
@@ -9,7 +8,7 @@ window.onload = () => {
     const btnImagen = document.getElementById("enviarImagen");
     const botonesSala = document.querySelectorAll(".sala-btn");
     const nombreSala = document.getElementById("nombreSala");
-    const salasContainer = document.getElementById("salasContainer"); // Contenedor de botones de sala
+    const salasContainer = document.getElementById("salasContainer");
 
     const landing = document.getElementById("landing");
     const chat = document.getElementById("chat");
@@ -17,12 +16,16 @@ window.onload = () => {
     const usernameInput = document.getElementById("username");
     const avatars = document.querySelectorAll(".avatar");
     const startChat = document.getElementById("startChat");
+    
+
+    const userAvatar = document.getElementById("user-avatar");
+    const userName = document.getElementById("user-name");
 
     let nombreUsuario = "";
     let avatarSeleccionado = "";
-    let salaActual = "publica"; // Entra automáticamente a la sala pública
+    let salaActual = "publica";
 
-    // Seleccionar avatar
+
     avatars.forEach(avatar => {
         avatar.addEventListener("click", () => {
             avatars.forEach(a => a.classList.remove("selected"));
@@ -35,12 +38,16 @@ window.onload = () => {
     startChat.addEventListener("click", () => {
         nombreUsuario = usernameInput.value.trim();
         if (nombreUsuario !== "" && avatarSeleccionado !== "") {
-            landing.style.display = "none"; // Oculta pantalla de inicio
-            chat.style.display = "block"; // Muestra el chat
+            landing.style.display = "none"; 
+            chat.style.display = "block";
+            
+            
+            userAvatar.src = `/img/${avatarSeleccionado}`;
+            userName.textContent = nombreUsuario;
             
             socket.emit("nombre", { nombre: nombreUsuario, avatar: avatarSeleccionado });
 
-            // Unirse automáticamente a la sala pública
+            
             socket.emit("cambiarSala", { 
                 nombre: nombreUsuario, 
                 avatar: avatarSeleccionado, 
@@ -52,7 +59,7 @@ window.onload = () => {
         }
     });
 
-    // Cambiar de sala con los botones
+    
     botonesSala.forEach(boton => {
         boton.addEventListener("click", () => {
             const nuevaSala = boton.dataset.sala;
@@ -68,15 +75,16 @@ window.onload = () => {
         });
     });
 
-    // Evento cuando el usuario cambia de sala
+    // cambio de sala
     socket.on("cambioSala", (data) => {
         salaActual = data.sala;
-        listaSala.innerHTML = ""; // Limpiar mensajes anteriores
+        listaSala.innerHTML = "";
 
         nombreSala.textContent = `Sala: ${salaActual}`;
 
         const li = document.createElement("li");
         li.innerText = `Te has unido a la sala ${data.sala}`;
+        li.classList.add("sistema-mensaje");
         listaSala.appendChild(li);
 
         // Resaltar el botón de la sala actual
@@ -98,7 +106,7 @@ window.onload = () => {
         }
     });
 
-    // Permitir enviar mensaje con Enter
+    //enviar mensaje con Enter
     input.addEventListener("keypress", (event) => {
         if (event.key === "Enter") {
             const mensaje = input.value.trim();
@@ -132,14 +140,56 @@ window.onload = () => {
     socket.on("server", (datos) => {
         if (datos.sala === salaActual) {
             const li = document.createElement("li");
-            const img = document.createElement("img");
-            img.src = `/img/${datos.avatar}`;
-            img.alt = "Avatar";
-            img.style.width = "30px";
-            img.style.borderRadius = "50%";
-            li.appendChild(img);
-            li.appendChild(document.createTextNode(` ${datos.nombre}: ${datos.mensaje}`));
+            
+            // Si es un mensaje propio o de otro usuario
+            if (datos.nombre === nombreUsuario) {
+                li.classList.add("mensaje-propio");
+                li.appendChild(document.createTextNode(`${datos.mensaje}`));
+                
+                // Agregar marca de tiempo
+                const timeSpan = document.createElement("span");
+                timeSpan.classList.add("mensaje-hora");
+                timeSpan.textContent = obtenerHoraActual();
+                li.appendChild(timeSpan);
+                
+                // Agregar doble check
+                const checkSpan = document.createElement("span");
+                checkSpan.classList.add("mensaje-check");
+                checkSpan.innerHTML = '<i class="fas fa-check-double"></i>';
+                li.appendChild(checkSpan);
+            } else {
+                li.classList.add("mensaje-otro");
+                
+                const img = document.createElement("img");
+                img.src = `/img/${datos.avatar}`;
+                img.alt = "Avatar";
+                img.style.width = "30px";
+                img.style.borderRadius = "50%";
+                
+                const messageContent = document.createElement("div");
+                messageContent.classList.add("mensaje-contenido");
+                
+                const nombreElement = document.createElement("div");
+                nombreElement.classList.add("mensaje-nombre");
+                nombreElement.textContent = datos.nombre;
+                
+                const textoElement = document.createElement("div");
+                textoElement.textContent = datos.mensaje;
+                
+                const timeSpan = document.createElement("span");
+                timeSpan.classList.add("mensaje-hora");
+                timeSpan.textContent = obtenerHoraActual();
+                
+                messageContent.appendChild(nombreElement);
+                messageContent.appendChild(textoElement);
+                messageContent.appendChild(timeSpan);
+                
+                li.appendChild(img);
+                li.appendChild(messageContent);
+            }
+            
             listaSala.appendChild(li);
+            listaSala.scrollTop = listaSala.scrollHeight;
         }
     });
 
@@ -147,32 +197,79 @@ window.onload = () => {
     socket.on("serverImagen", (datos) => {
         if (datos.sala === salaActual) {
             const li = document.createElement("li");
-            const nombreSpan = document.createElement("span");
-            const imgAvatar = document.createElement("img");
-            imgAvatar.src = `/img/${datos.avatar}`;
-            imgAvatar.alt = "Avatar";
-            imgAvatar.style.width = "30px";
-            imgAvatar.style.borderRadius = "50%";
-            nombreSpan.appendChild(imgAvatar);
-            nombreSpan.appendChild(document.createTextNode(` ${datos.nombre}: `));
-
-            const img = document.createElement("img");
-            img.src = datos.mensaje;
-            img.alt = "Imagen subida";
-            img.style.maxWidth = "200px";
-            img.style.cursor = "pointer";
-            img.addEventListener("click", () => {
-                const link = document.createElement("a");
-                link.href = img.src;
-                link.download = datos.nombreArchivo || "descarga.png";
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            });
-
-            li.appendChild(nombreSpan);
-            li.appendChild(img);
+            li.classList.add("mensaje-imagen");
+            
+            if (datos.nombre === nombreUsuario) {
+                li.classList.add("mensaje-propio");
+                
+                const img = document.createElement("img");
+                img.src = datos.mensaje;
+                img.alt = "Imagen subida";
+                img.style.maxWidth = "200px";
+                img.style.borderRadius = "5px";
+                img.style.cursor = "pointer";
+                
+                img.addEventListener("click", () => {
+                    const link = document.createElement("a");
+                    link.href = img.src;
+                    link.download = datos.nombreArchivo || "descarga.png";
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
+                
+                const timeSpan = document.createElement("span");
+                timeSpan.classList.add("mensaje-hora");
+                timeSpan.textContent = obtenerHoraActual();
+                
+                li.appendChild(img);
+                li.appendChild(timeSpan);
+            } else {
+                li.classList.add("mensaje-otro");
+                
+                const avatarImg = document.createElement("img");
+                avatarImg.src = `/img/${datos.avatar}`;
+                avatarImg.alt = "Avatar";
+                avatarImg.style.width = "30px";
+                avatarImg.style.borderRadius = "50%";
+                
+                const messageContent = document.createElement("div");
+                messageContent.classList.add("mensaje-contenido");
+                
+                const nombreElement = document.createElement("div");
+                nombreElement.classList.add("mensaje-nombre");
+                nombreElement.textContent = datos.nombre;
+                
+                const img = document.createElement("img");
+                img.src = datos.mensaje;
+                img.alt = "Imagen subida";
+                img.style.maxWidth = "200px";
+                img.style.borderRadius = "5px";
+                img.style.cursor = "pointer";
+                
+                img.addEventListener("click", () => {
+                    const link = document.createElement("a");
+                    link.href = img.src;
+                    link.download = datos.nombreArchivo || "descarga.png";
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
+                
+                const timeSpan = document.createElement("span");
+                timeSpan.classList.add("mensaje-hora");
+                timeSpan.textContent = obtenerHoraActual();
+                
+                messageContent.appendChild(nombreElement);
+                messageContent.appendChild(img);
+                messageContent.appendChild(timeSpan);
+                
+                li.appendChild(avatarImg);
+                li.appendChild(messageContent);
+            }
+            
             listaSala.appendChild(li);
+            listaSala.scrollTop = listaSala.scrollHeight;
         }
     });
 
@@ -180,8 +277,10 @@ window.onload = () => {
     socket.on("nuevoUsuarioEnSala", (data) => {
         if (data.sala === salaActual) {
             const li = document.createElement("li");
+            li.classList.add("sistema-mensaje");
             li.innerText = `${data.nombre} se ha unido a la sala ${data.sala}`;
             listaSala.appendChild(li);
+            listaSala.scrollTop = listaSala.scrollHeight;
         }
     });
 
@@ -189,8 +288,18 @@ window.onload = () => {
     socket.on("usuarioSalio", (data) => {
         if (data.sala === salaActual) {
             const li = document.createElement("li");
+            li.classList.add("sistema-mensaje");
             li.innerText = `${data.nombre} ha salido de la sala ${data.sala}`;
             listaSala.appendChild(li);
+            listaSala.scrollTop = listaSala.scrollHeight;
         }
     });
+    
+    // Función para obtener la hora actual en formato HH:MM
+    function obtenerHoraActual() {
+        const ahora = new Date();
+        const horas = ahora.getHours().toString().padStart(2, '0');
+        const minutos = ahora.getMinutes().toString().padStart(2, '0');
+        return `${horas}:${minutos}`;
+    }
 };
