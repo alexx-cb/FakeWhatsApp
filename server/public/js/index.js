@@ -17,14 +17,22 @@ window.onload = () => {
     const avatars = document.querySelectorAll(".avatar");
     const startChat = document.getElementById("startChat");
     
-
     const userAvatar = document.getElementById("user-avatar");
     const userName = document.getElementById("user-name");
+
+    const escribiendoIndicador = document.createElement("div");
+    escribiendoIndicador.id = "escribiendo-indicador";
+    escribiendoIndicador.classList.add("escribiendo-indicador");
+    escribiendoIndicador.style.display = "none";
+    
+    const waInputArea = document.querySelector(".wa-input-area");
+    waInputArea.parentNode.insertBefore(escribiendoIndicador, waInputArea);
 
     let nombreUsuario = "";
     let avatarSeleccionado = "";
     let salaActual = "publica";
-
+    let typingTimer;
+    let isTyping = false;
 
     avatars.forEach(avatar => {
         avatar.addEventListener("click", () => {
@@ -41,13 +49,11 @@ window.onload = () => {
             landing.style.display = "none"; 
             chat.style.display = "block";
             
-            
             userAvatar.src = `/img/${avatarSeleccionado}`;
             userName.textContent = nombreUsuario;
             
             socket.emit("nombre", { nombre: nombreUsuario, avatar: avatarSeleccionado });
 
-            
             socket.emit("cambiarSala", { 
                 nombre: nombreUsuario, 
                 avatar: avatarSeleccionado, 
@@ -59,7 +65,6 @@ window.onload = () => {
         }
     });
 
-    
     botonesSala.forEach(boton => {
         boton.addEventListener("click", () => {
             const nuevaSala = boton.dataset.sala;
@@ -75,10 +80,46 @@ window.onload = () => {
         });
     });
 
+    // escritura
+    input.addEventListener("input", () => {
+        if (!isTyping) {
+            isTyping = true;
+            socket.emit("escribiendo", { 
+                nombre: nombreUsuario, 
+                sala: salaActual 
+            });
+        }
+        
+        clearTimeout(typingTimer);
+        
+        typingTimer = setTimeout(() => {
+            isTyping = false;
+            socket.emit("dejoDeEscribir", { 
+                nombre: nombreUsuario, 
+                sala: salaActual 
+            });
+        }, 2000);
+    });
+
+    //usuario escribiendo
+    socket.on("usuarioEscribiendo", (datos) => {
+        if (datos.sala === salaActual && datos.nombre !== nombreUsuario) {
+            if (datos.escribiendo) {
+                escribiendoIndicador.textContent = `${datos.nombre} está escribiendo...`;
+                escribiendoIndicador.style.display = "block";
+            } else {
+                escribiendoIndicador.style.display = "none";
+            }
+        }
+    });
+
     // cambio de sala
     socket.on("cambioSala", (data) => {
         salaActual = data.sala;
         listaSala.innerHTML = "";
+        
+        // Ocultar el indicador de escritura al cambiar de sala
+        escribiendoIndicador.style.display = "none";
 
         nombreSala.textContent = `Sala: ${salaActual}`;
 
@@ -103,6 +144,14 @@ window.onload = () => {
         if (mensaje !== "") {
             socket.emit("mensaje", { nombre: nombreUsuario, avatar: avatarSeleccionado, mensaje: mensaje, sala: salaActual });
             input.value = "";
+            
+            // dejar de escribir
+            isTyping = false;
+            clearTimeout(typingTimer);
+            socket.emit("dejoDeEscribir", { 
+                nombre: nombreUsuario, 
+                sala: salaActual 
+            });
         }
     });
 
@@ -113,6 +162,14 @@ window.onload = () => {
             if (mensaje !== "") {
                 socket.emit("mensaje", { nombre: nombreUsuario, avatar: avatarSeleccionado, mensaje: mensaje, sala: salaActual });
                 input.value = "";
+                
+                // dejar de escribir
+                isTyping = false;
+                clearTimeout(typingTimer);
+                socket.emit("dejoDeEscribir", { 
+                    nombre: nombreUsuario, 
+                    sala: salaActual 
+                });
             }
         }
     });
@@ -131,6 +188,16 @@ window.onload = () => {
                     sala: salaActual
                 });
                 imagen.value = "";
+                
+                // dejar de escribir
+                if (isTyping) {
+                    isTyping = false;
+                    clearTimeout(typingTimer);
+                    socket.emit("dejoDeEscribir", { 
+                        nombre: nombreUsuario, 
+                        sala: salaActual 
+                    });
+                }
             };
             reader.readAsDataURL(archivo);
         }
@@ -139,6 +206,11 @@ window.onload = () => {
     // Recibir mensajes
     socket.on("server", (datos) => {
         if (datos.sala === salaActual) {
+            // Si esta escribiendo
+            if (datos.nombre !== nombreUsuario) {
+                escribiendoIndicador.style.display = "none";
+            }
+            
             const li = document.createElement("li");
             
             // Si es un mensaje propio o de otro usuario
@@ -196,6 +268,11 @@ window.onload = () => {
     // Recibir imágenes
     socket.on("serverImagen", (datos) => {
         if (datos.sala === salaActual) {
+            // Si esta escribiendo
+            if (datos.nombre !== nombreUsuario) {
+                escribiendoIndicador.style.display = "none";
+            }
+            
             const li = document.createElement("li");
             li.classList.add("mensaje-imagen");
             

@@ -56,6 +56,24 @@ io.on('connection', (socket) => {
             io.emit("serverImagen", datos);
         }
     });
+
+    socket.on("escribiendo", (datos) => {
+        // Emitir a todos excepto al remitente
+        socket.to(datos.sala).emit("usuarioEscribiendo", {
+            nombre: datos.nombre,
+            sala: datos.sala,
+            escribiendo: true
+        });
+    });
+    
+    // Manejar evento de usuario dejó de escribir
+    socket.on("dejoDeEscribir", (datos) => {
+        socket.to(datos.sala).emit("usuarioEscribiendo", {
+            nombre: datos.nombre,
+            sala: datos.sala,
+            escribiendo: false
+        });
+    });
     
     // Nuevo evento para cambiar de sala directamente
     socket.on("cambiarSala", (data) => {

@@ -332,6 +332,23 @@ body {
     margin-left: 5px;
 }
 
+.escribiendo-indicador {
+    padding: 8px 15px;
+    background-color: #f0f2f5;
+    color: #54656f;
+    font-size: 13px;
+    font-style: italic;
+    text-align: left;
+    border-top: 1px solid #e0e0e0;
+    animation: typing-pulse 1.5s infinite;
+}
+
+@keyframes typing-pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
 /* Media Queries */
 @media (max-width: 768px) {
     .wa-container {
